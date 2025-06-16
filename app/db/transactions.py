@@ -129,6 +129,10 @@ async def list_transactions(page: int = 1, limit: int = 10, filters: Dict = None
         # Convert ObjectId to string for each transaction
         for transaction in transactions:
             transaction["_id"] = str(transaction["_id"])
+           
+            # Convert is_nighttime from int to string - FIX FOR VALIDATION ERROR
+            if "is_nighttime" in transaction:
+                transaction["is_nighttime"] = str(transaction["is_nighttime"])        
         
         # Get total count for pagination
         total = await db.transactions.count_documents(filters)
