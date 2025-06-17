@@ -34,8 +34,8 @@ class NotificationService:
                 "is_nighttime": transaction_data["is_nighttime"],
                 "category": transaction_data["category"],
                 "transaction_location": transaction_data["transaction_location"],
-                "job": transaction_data.get("cardholder_info", {}).get("job"),
-                "state": transaction_data.get("cardholder_info", {}).get("state")
+                "job": transaction_data["job"],
+                "state": transaction_data["state"]
             }
             
             logging.info(f"Sending fraud notification for transaction {notification_data['transaction_number']}")
@@ -43,7 +43,7 @@ class NotificationService:
             # Make API call to notification service
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.api_url}/notifications/send", 
+                    f"{self.api_url}/send", 
                     json=notification_data,
                     timeout=self.timeout
                 )
