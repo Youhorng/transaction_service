@@ -10,7 +10,7 @@ class NotificationService:
     # Initialize API url 
     def __init__(self):
         self.api_url = settings.NOTIFY_API_URL
-        self.timeout = 10.0
+        self.timeout = 60.0
 
     
     # Send a fraud notification 

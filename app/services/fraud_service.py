@@ -7,13 +7,15 @@ from app.config.config import settings
 # Service to interact with the fraud detection API
 class FraudService:
 
-    # Inialize the sevice with API
+    # Initialize the service with API
     def __init__(self):
         self.api_url = settings.FRAUD_API_URL
-        self.timeout = 10.0
+        # Increase timeout from 10.0 to 60.0 seconds
+        self.timeout = 60.0  # Changed from 10.0 seconds
+        logging.info(f"Fraud service initialized with URL: {self.api_url}, timeout: {self.timeout}s")
 
     
-    # Check if a transaction if fraudulent 
+    # Check if a transaction is fraudulent 
     async def check_transaction(self, transaction_data: Dict[str, Any]) -> Dict[str, Any]:
         try:
             # Map transaction data to the expected API format
@@ -29,10 +31,10 @@ class FraudService:
 
             logging.info(f"Sending fraud check request for transaction {transaction_data['transaction_number']}")
 
-            # Make API call to fraud service 
+            # Make API call to fraud service with increased timeout
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.api_url}/fraud/predict",
+                    f"{self.api_url}/predict",  # Removed 'fraud/' prefix since it's already in the URL
                     json=request_data,
                     timeout=self.timeout
                 )
@@ -44,10 +46,10 @@ class FraudService:
 
                     return {
                         "success": True,
-                        "is_fraud": result["is_fraud"],
-                        "fraud_probability": result["fraud_probability"],
-                        "label": result["label"],
-                        "timestamp": result["timestamp"]
+                        "is_fraud": result.get("is_fraud", False),
+                        "fraud_probability": result.get("fraud_probability", 0.0),
+                        "label": result.get("label", "Unknown"),
+                        "timestamp": result.get("timestamp", None)
                     }
                 else:
                     error_detail = response.json().get("detail", "Unknown error")
@@ -61,16 +63,16 @@ class FraudService:
         except httpx.TimeoutException:
             error_msg = f"Timeout connecting to Fraud API ({self.timeout}s)"
             logging.error(error_msg)
-            return {"success": False, "error": error_msg}
+            return {"success": False, "error": error_msg, "is_fraud": False, "fraud_probability": 0.0}
             
         except httpx.RequestError as e:
             error_msg = f"Error connecting to Fraud API: {str(e)}"
             logging.error(error_msg)
-            return {"success": False, "error": error_msg}
+            return {"success": False, "error": error_msg, "is_fraud": False, "fraud_probability": 0.0}
             
         except Exception as e:
             error_msg = f"Unexpected error in fraud check: {str(e)}"
             logging.error(error_msg)
-            return {"success": False, "error": error_msg}
+            return {"success": False, "error": error_msg, "is_fraud": False, "fraud_probability": 0.0}
 
 fraud_service = FraudService()
